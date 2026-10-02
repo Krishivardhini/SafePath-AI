@@ -1344,29 +1344,75 @@ function initCompanionLiveHUD() {
   captureCanvas.height = CONFIG.FRAME_HEIGHT;
   const captureCtx = captureCanvas.getContext("2d");
   let frameWatchdog = null;
+  let lastHttpDetectionTime = 0;
 
   function sendLiveFrame() {
     if (!isRunning || !cameraStreamActive || isSendingFrame) return;
-    if (!liveWebSocket || liveWebSocket.readyState !== WebSocket.OPEN) {
-      connectWebSocket();
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+    const isWsOpen = liveWebSocket && liveWebSocket.readyState === WebSocket.OPEN;
+    const now = Date.now();
+
+    // If WS is not open, throttle HTTP fallback to avoid flooding mobile network (~3 FPS)
+    if (!isWsOpen && (now - lastHttpDetectionTime < 350)) {
       return;
     }
-    if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
     isSendingFrame = true;
     clearTimeout(frameWatchdog);
     frameWatchdog = setTimeout(() => {
       isSendingFrame = false;
-    }, 650);
+    }, 850);
 
     captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
-    captureCanvas.toBlob((blob) => {
-      if (blob && liveWebSocket && liveWebSocket.readyState === WebSocket.OPEN) {
-        liveWebSocket.send(blob);
-      } else {
+    captureCanvas.toBlob(async (blob) => {
+      if (!blob) {
         isSendingFrame = false;
-        clearTimeout(frameWatchdog);
+        return;
+      }
+
+      if (isWsOpen) {
+        try {
+          const buffer = await blob.arrayBuffer();
+          if (liveWebSocket && liveWebSocket.readyState === WebSocket.OPEN) {
+            liveWebSocket.send(buffer);
+          } else {
+            isSendingFrame = false;
+          }
+        } catch (e) {
+          isSendingFrame = false;
+        }
+      } else {
+        // Automatic HTTP REST fallback for mobile networks & cellular data
+        lastHttpDetectionTime = Date.now();
+        try {
+          const formData = new FormData();
+          formData.append("file", blob, "camera.jpg");
+          const res = await fetch("/api/detect", { method: "POST", body: formData });
+          if (res.ok) {
+            const data = await res.json();
+            lastServerDetections = data.detections || [];
+            lastServerWinner = data.winner || null;
+            lastServerTelemetry = data.telemetry || null;
+            lastServerResultAt = Date.now();
+            latestVisionPayload = data;
+
+            updateLiveViews(data);
+
+            if (data.winner) {
+              alertManager.process({ ...data.winner, message: `${localizedDetection(data.winner, guidanceLanguage)}.` });
+              if (data.winner.distance_m != null) {
+                audioEngine.tickSonar(data.winner.distance_m, data.winner.position || "CENTER");
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("HTTP detection fallback notice:", err);
+        } finally {
+          isSendingFrame = false;
+          clearTimeout(frameWatchdog);
+        }
       }
     }, "image/jpeg", 0.60);
   }
@@ -1430,9 +1476,19 @@ function initCompanionLiveHUD() {
     const activeDetections = isFresh ? lastServerDetections : [];
     const winner = isFresh ? lastServerWinner : null;
 
+    const scaleX = canvas.width / CONFIG.FRAME_WIDTH;
+    const scaleY = canvas.height / CONFIG.FRAME_HEIGHT;
+
     // Render Bounding Boxes & Tags
     activeDetections.forEach((det) => {
-      const [x1, y1, x2, y2] = det.bbox;
+      const [origX1, origY1, origX2, origY2] = det.bbox;
+      const x1 = origX1 * scaleX;
+      const y1 = origY1 * scaleY;
+      const x2 = origX2 * scaleX;
+      const y2 = origY2 * scaleY;
+      const bw = Math.max(1, x2 - x1);
+      const bh = Math.max(1, y2 - y1);
+
       const isWinner = winner && (winner.track_id === det.track_id || winner.class_name === det.class_name);
       const riskLvl = det.risk_level || "LOW";
 
@@ -1443,7 +1499,7 @@ function initCompanionLiveHUD() {
 
       ctx.strokeStyle = boxColor;
       ctx.lineWidth = isWinner ? 3.5 : 2;
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.strokeRect(x1, y1, bw, bh);
 
       // Label Badge
       const t = TERMS[guidanceLanguage] || TERMS.en;
