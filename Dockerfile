@@ -11,6 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Install essential system dependencies for OpenCV and audio
+# Note: libgl1 and libglib2.0-0 are standard for Debian 12 (bookworm)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
