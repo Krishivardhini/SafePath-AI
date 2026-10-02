@@ -1343,13 +1343,22 @@ function initCompanionLiveHUD() {
   captureCanvas.width = CONFIG.FRAME_WIDTH;
   captureCanvas.height = CONFIG.FRAME_HEIGHT;
   const captureCtx = captureCanvas.getContext("2d");
+  let frameWatchdog = null;
 
   function sendLiveFrame() {
     if (!isRunning || !cameraStreamActive || isSendingFrame) return;
-    if (!liveWebSocket || liveWebSocket.readyState !== WebSocket.OPEN) return;
+    if (!liveWebSocket || liveWebSocket.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+      return;
+    }
     if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
     isSendingFrame = true;
+    clearTimeout(frameWatchdog);
+    frameWatchdog = setTimeout(() => {
+      isSendingFrame = false;
+    }, 650);
+
     captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
 
     captureCanvas.toBlob((blob) => {
@@ -1357,12 +1366,14 @@ function initCompanionLiveHUD() {
         liveWebSocket.send(blob);
       } else {
         isSendingFrame = false;
+        clearTimeout(frameWatchdog);
       }
-    }, "image/jpeg", 0.70);
+    }, "image/jpeg", 0.60);
   }
 
   window.__safePathReleaseFrame = () => {
     isSendingFrame = false;
+    clearTimeout(frameWatchdog);
   };
 
   function renderHUD() {
@@ -1415,7 +1426,7 @@ function initCompanionLiveHUD() {
       ctx.fillRect(corridorStartX, 0, corridorEndX - corridorStartX, canvas.height);
     }
 
-    const isFresh = Date.now() - lastServerResultAt <= 1500;
+    const isFresh = Date.now() - lastServerResultAt <= 3000;
     const activeDetections = isFresh ? lastServerDetections : [];
     const winner = isFresh ? lastServerWinner : null;
 
@@ -1470,6 +1481,7 @@ function initCompanionLiveHUD() {
     isRunning = true;
     startBtn.hidden = true;
     stopBtn.hidden = false;
+    connectWebSocket();
 
     try {
       const constraints = {
@@ -1681,7 +1693,7 @@ function initCompanionLiveHUD() {
 
 function updateLiveViews(payload) {
   payload = payload || {};
-  const fresh = Date.now() - lastServerResultAt <= 1500;
+  const fresh = Date.now() - lastServerResultAt <= 3000;
   const detections = fresh ? payload.detections || [] : [];
   const winner = fresh ? payload.winner : null;
   const state = fresh ? payload.safety_state || "SAFE" : "SAFE";
@@ -2769,6 +2781,8 @@ function initNavigationPage() {
 // 10. Backend Sync & WebSocket Client
 // ============================================================================
 
+let healthCheckTimer = null;
+
 async function initBackendSync() {
   const badgeEl = document.querySelector("#backend-status-badge");
   const labelEl = document.querySelector("#backend-status-label");
@@ -2776,40 +2790,61 @@ async function initBackendSync() {
 
   if (!window.location.protocol.startsWith("http")) return;
 
-  try {
-    const res = await fetch("/api/health");
-    if (!res.ok) throw new Error("Health failed");
-    const data = await res.json();
+  async function checkHealth() {
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      if (!res.ok) throw new Error("Health check failed");
+      const data = await res.json();
 
-    isBackendAvailable = true;
-    serverLocalIp = data.local_ip || window.location.hostname;
-    const url = `http://${serverLocalIp}:8000/`;
+      isBackendAvailable = true;
+      serverLocalIp = data.local_ip || window.location.hostname;
+      const url = `http://${serverLocalIp}:8000/`;
 
-    if (badgeEl) badgeEl.className = "system-status-pill";
-    if (labelEl) labelEl.textContent = `System Active (${data.device.toUpperCase()})`;
-    if (modalNetUrl) modalNetUrl.textContent = url;
+      if (badgeEl) badgeEl.className = "system-status-pill";
+      if (labelEl) labelEl.textContent = `System Active (${(data.device || "CPU").toUpperCase()})`;
+      if (modalNetUrl) modalNetUrl.textContent = url;
 
-    connectWebSocket();
-  } catch (err) {
-    isBackendAvailable = false;
-    if (badgeEl) badgeEl.className = "system-status-pill is-offline";
-    if (labelEl) labelEl.textContent = "Offline Mode";
+      connectWebSocket();
+    } catch (err) {
+      isBackendAvailable = false;
+      if (badgeEl) badgeEl.className = "system-status-pill is-offline";
+      if (labelEl) labelEl.textContent = "Connecting to AI...";
+      // Retry in 2.5s for cold start wakeups
+      clearTimeout(healthCheckTimer);
+      healthCheckTimer = setTimeout(checkHealth, 2500);
+    }
   }
+
+  checkHealth();
+  connectWebSocket();
 }
 
 function connectWebSocket() {
-  if (!isBackendAvailable) return;
+  if (liveWebSocket && (liveWebSocket.readyState === WebSocket.OPEN || liveWebSocket.readyState === WebSocket.CONNECTING)) {
+    return;
+  }
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws/live`;
 
   try {
     liveWebSocket = new WebSocket(wsUrl);
 
+    liveWebSocket.onopen = () => {
+      isBackendAvailable = true;
+      const badgeEl = document.querySelector("#backend-status-badge");
+      const labelEl = document.querySelector("#backend-status-label");
+      const feedStatus = document.querySelector("#feed-status-label");
+      if (badgeEl) badgeEl.className = "system-status-pill";
+      if (labelEl) labelEl.textContent = "System Active (LIVE AI)";
+      if (feedStatus && isRunning) feedStatus.textContent = "LIVE";
+    };
+
     liveWebSocket.onmessage = (event) => {
+      isSendingFrame = false;
+      if (window.__safePathReleaseFrame) window.__safePathReleaseFrame();
+
       try {
         const data = JSON.parse(event.data);
-        if (window.__safePathReleaseFrame) window.__safePathReleaseFrame();
-
         if (data.type === "detection_result") {
           lastServerDetections = data.detections || [];
           lastServerWinner = data.winner || null;
@@ -2826,14 +2861,25 @@ function connectWebSocket() {
             }
           }
         }
-      } catch (e) { }
+      } catch (e) {
+        console.warn("WS parsing warning:", e);
+      }
+    };
+
+    liveWebSocket.onerror = () => {
+      isSendingFrame = false;
+      if (window.__safePathReleaseFrame) window.__safePathReleaseFrame();
     };
 
     liveWebSocket.onclose = () => {
+      isSendingFrame = false;
       if (window.__safePathReleaseFrame) window.__safePathReleaseFrame();
-      setTimeout(connectWebSocket, 3000);
+      setTimeout(connectWebSocket, 2000);
     };
-  } catch (e) { }
+  } catch (e) {
+    isSendingFrame = false;
+    setTimeout(connectWebSocket, 2500);
+  }
 }
 
 // ============================================================================

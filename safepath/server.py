@@ -136,6 +136,13 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def preload_models():
+    """Pre-warms YOLOv8 model in background so first live WebSocket frame is immediate."""
+    asyncio.create_task(asyncio.to_thread(get_models))
+
+
+
 # ---------------------------------------------------------------------------
 # Pydantic Schemas
 # ---------------------------------------------------------------------------

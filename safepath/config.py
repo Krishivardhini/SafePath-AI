@@ -20,7 +20,7 @@ YOLO_MODEL_PATH = "yolov8n.pt"
 CONFIDENCE_THRESHOLD = 0.40
 IOU_THRESHOLD = 0.45
 DETECTOR_DEVICE = "auto"         # "auto" | "cuda" | "mps" | "cpu"
-INFERENCE_IMG_SIZE = 640        # Standard YOLO input resolution
+INFERENCE_IMG_SIZE = 480        # Optimized YOLO input resolution for real-time edge/cloud inference
 HALF_PRECISION = True           # Use FP16 on CUDA/MPS devices if supported
 WARMUP_ON_LOAD = True           # Pre-warm model with dummy tensor to eliminate cold-start lag
 
