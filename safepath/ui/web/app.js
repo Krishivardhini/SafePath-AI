@@ -16,7 +16,7 @@ const CONFIG = {
   CENTER_ZONE_FRACTION: 0.34,
   MAX_RELEVANT_DISTANCE_M: 6.0,
   ALERT_COOLDOWN_SECONDS: 2.0,
-  CONFIDENCE_THRESHOLD: 0.40,
+  CONFIDENCE_THRESHOLD: 0.25,
   TTS_RATE_WPM: 175,
 
   CATEGORY_WEIGHT: {
@@ -1513,7 +1513,16 @@ function initCompanionLiveHUD() {
     } catch (err) {
       console.warn("Camera permission error:", err);
       if (cameraError) {
-        cameraError.textContent = "Camera permission denied or camera device unavailable.";
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")) {
+          cameraError.innerHTML = `
+            <strong>🔒 Mobile Browser Security Notice:</strong><br>
+            Mobile browsers block camera access on local HTTP addresses (<code>${window.location.host}</code>).<br>
+            Please open the secure <strong>HTTPS</strong> deployment on your phone:<br>
+            <a href="https://safepath-ai-1-k2g4.onrender.com/" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline; display:inline-block; margin-top:6px;">👉 Open https://safepath-ai-1-k2g4.onrender.com</a>
+          `;
+        } else {
+          cameraError.textContent = "Camera permission denied or camera device unavailable. Please allow camera permissions in your browser.";
+        }
         cameraError.hidden = false;
       }
       isRunning = false;

@@ -17,7 +17,7 @@ from typing import Dict, Tuple
 # Swap for a fine-tuned .pt or .onnx later without touching any other module.
 YOLO_MODEL_PATH = "yolov8n.pt"
 
-CONFIDENCE_THRESHOLD = 0.40
+CONFIDENCE_THRESHOLD = 0.25
 IOU_THRESHOLD = 0.45
 DETECTOR_DEVICE = "auto"         # "auto" | "cuda" | "mps" | "cpu"
 INFERENCE_IMG_SIZE = 480        # Optimized YOLO input resolution for real-time edge/cloud inference
