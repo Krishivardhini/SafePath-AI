@@ -1587,52 +1587,59 @@ function initCompanionLiveHUD() {
         }
       }
 
-      if (feedStatusLabel) feedStatusLabel.textContent = isBackendAvailable ? "LIVE" : "CAMERA ONLY";
-      if (cameraError) cameraError.hidden = true;
-      updateLiveViews({});
-    } catch (err) {
-      console.warn("Camera permission error:", err);
-      if (cameraError) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")) {
-          cameraError.innerHTML = `
-            <strong>🔒 Mobile Browser Security Notice:</strong><br>
-            Mobile browsers block camera access on local HTTP addresses (<code>${window.location.host}</code>).<br>
-            Please open the secure <strong>HTTPS</strong> deployment on your phone:<br>
-            <a href="https://safepath-ai-1-k2g4.onrender.com/" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline; display:inline-block; margin-top:6px;">👉 Open https://safepath-ai-1-k2g4.onrender.com</a>
-          `;
-        } else {
-          cameraError.textContent = "Camera permission denied or camera device unavailable. Please allow camera permissions in your browser.";
-        }
-        cameraError.hidden = false;
+    const standbyOverlay = document.querySelector("#standby-start-overlay");
+    if (standbyOverlay) standbyOverlay.classList.add("is-hidden");
+
+    if (feedStatusLabel) feedStatusLabel.textContent = isBackendAvailable ? "LIVE" : "CAMERA ONLY";
+    if (cameraError) cameraError.hidden = true;
+    updateLiveViews({});
+  } catch (err) {
+    console.warn("Camera permission error:", err);
+    if (cameraError) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || (window.location.protocol === "http:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")) {
+        cameraError.innerHTML = `
+          <strong>🔒 Mobile Browser Security Notice:</strong><br>
+          Mobile browsers block camera access on local HTTP addresses (<code>${window.location.host}</code>).<br>
+          Please open the secure <strong>HTTPS</strong> deployment on your phone:<br>
+          <a href="https://safepath-ai-1-k2g4.onrender.com/" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline; display:inline-block; margin-top:6px;">👉 Open https://safepath-ai-1-k2g4.onrender.com</a>
+        `;
+      } else {
+        cameraError.textContent = "Camera permission denied or camera device unavailable. Please allow camera permissions in your browser.";
       }
-      isRunning = false;
-      cameraStreamActive = false;
-      startBtn.hidden = false;
-      stopBtn.hidden = true;
-      if (vStart) vStart.hidden = false;
-      if (vStop) vStop.hidden = true;
-      if (feedStatusLabel) feedStatusLabel.textContent = "STANDBY";
-      renderHUD();
-      return;
+      cameraError.hidden = false;
     }
-
-    audioEngine.init();
-    renderHUD();
-    showToast("SafePath-AI live vision started");
-  }
-
-  function stopCompanion() {
     isRunning = false;
     cameraStreamActive = false;
     startBtn.hidden = false;
     stopBtn.hidden = true;
-    const vStart = document.querySelector("#vision-start-safepath");
-    const vStop = document.querySelector("#vision-stop-safepath");
     if (vStart) vStart.hidden = false;
     if (vStop) vStop.hidden = true;
+    const standbyOverlay = document.querySelector("#standby-start-overlay");
+    if (standbyOverlay) standbyOverlay.classList.remove("is-hidden");
+    if (feedStatusLabel) feedStatusLabel.textContent = "STANDBY";
+    renderHUD();
+    return;
+  }
 
-    if (feedStatusLabel) feedStatusLabel.textContent = "READY";
-    if (fpsLabel) fpsLabel.textContent = "0";
+  audioEngine.init();
+  renderHUD();
+  showToast("SafePath-AI live vision started");
+}
+
+function stopCompanion() {
+  isRunning = false;
+  cameraStreamActive = false;
+  startBtn.hidden = false;
+  stopBtn.hidden = true;
+  const vStart = document.querySelector("#vision-start-safepath");
+  const vStop = document.querySelector("#vision-stop-safepath");
+  if (vStart) vStart.hidden = false;
+  if (vStop) vStop.hidden = true;
+  const standbyOverlay = document.querySelector("#standby-start-overlay");
+  if (standbyOverlay) standbyOverlay.classList.remove("is-hidden");
+
+  if (feedStatusLabel) feedStatusLabel.textContent = "READY";
+  if (fpsLabel) fpsLabel.textContent = "0";
 
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => track.stop());

@@ -14,10 +14,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2.2">
+    <link rel="stylesheet" href="styles.css?v=3.5">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script>
-      // Clear old PWA service worker caches if obsolete
+      // Clear old PWA service worker caches to ensure latest live updates
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for(let registration of registrations) {
@@ -28,7 +28,7 @@
       if ('caches' in window) {
         caches.keys().then(function(names) {
           for (let name of names) {
-            if (name !== 'safepath-v2.2-multilingual-perm') caches.delete(name);
+            caches.delete(name);
           }
         });
       }
@@ -255,6 +255,15 @@
                     <div class="feed-live-indicator" id="feed-live-badge">
                       <span class="rec-dot"></span>
                       <span id="live-indicator-text">Live</span>
+                    </div>
+
+                    <!-- Standby Centered Click-to-Start Button -->
+                    <div id="standby-start-overlay" class="standby-start-overlay" onclick="document.querySelector('#start-safepath')?.click()" title="Click to start camera vision">
+                      <div class="standby-play-btn" aria-hidden="true">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                      </div>
+                      <div style="font-weight:800; font-size:1.1rem; margin-top:12px; color:#ffffff;">Start Live Vision Camera</div>
+                      <div style="font-size:0.82rem; color:#94a3b8; margin-top:4px;">Tap to activate YOLOv8 AI obstacle detection & voice guidance</div>
                     </div>
                   </div>
                 </div>
@@ -1618,6 +1627,6 @@
 
     <!-- Application Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="app.js?v=2.2"></script>
+    <script src="app.js?v=3.5"></script>
   </body>
 </html>
