@@ -1453,7 +1453,7 @@ function initCompanionLiveHUD() {
       if (fpsLabel) fpsLabel.textContent = currentFPS;
     }
 
-    if (cameraStreamActive && video.readyState >= 2) {
+    if (cameraStreamActive && (video.videoWidth > 0 || video.readyState >= 1)) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       sendLiveFrame();
     } else {

@@ -1,5 +1,5 @@
 // SafePath Service Worker — Always Network First to ensure latest UI updates
-const CACHE_NAME = "safepath-v2.2-multilingual-perm";
+const CACHE_NAME = "safepath-v3.0-live-realtime";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
