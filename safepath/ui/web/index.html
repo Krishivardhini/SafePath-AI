@@ -240,20 +240,22 @@
                 </div>
 
                 <!-- Video Viewport Frame -->
-                <div class="camera-viewport-frame" id="hud-container">
-                  <video id="camera-preview" class="camera-video-feed" autoplay muted playsinline aria-label="Live Camera Stream" hidden></video>
-                  <canvas id="hud-canvas" class="hud-canvas-layer" width="640" height="480" aria-label="Live Obstacle Radar Canvas HUD"></canvas>
-                  
-                  <!-- Floating Path Status Banner -->
-                  <div id="floating-feed-banner" class="floating-feed-banner">
-                    <span aria-hidden="true">✓</span>
-                    <span id="floating-feed-text">Path is clear</span>
-                  </div>
+                <div id="home-viewport-host">
+                  <div class="camera-viewport-frame" id="hud-container">
+                    <video id="camera-preview" class="camera-video-feed" autoplay muted playsinline aria-label="Live Camera Stream" hidden></video>
+                    <canvas id="hud-canvas" class="hud-canvas-layer" width="640" height="480" aria-label="Live Obstacle Radar Canvas HUD"></canvas>
+                    
+                    <!-- Floating Path Status Banner -->
+                    <div id="floating-feed-banner" class="floating-feed-banner">
+                      <span aria-hidden="true">✓</span>
+                      <span id="floating-feed-text">Path is clear</span>
+                    </div>
 
-                  <!-- Live / Recording Tag -->
-                  <div class="feed-live-indicator" id="feed-live-badge">
-                    <span class="rec-dot"></span>
-                    <span id="live-indicator-text">Live</span>
+                    <!-- Live / Recording Tag -->
+                    <div class="feed-live-indicator" id="feed-live-badge">
+                      <span class="rec-dot"></span>
+                      <span id="live-indicator-text">Live</span>
+                    </div>
                   </div>
                 </div>
 
@@ -429,18 +431,48 @@
                   </div>
                 </div>
 
-                <div class="camera-viewport-frame">
-                  <!-- Video & Canvas are shared / synced -->
-                  <div class="floating-feed-banner" style="top:14px; left:14px;">
-                    <span id="vision-floating-text">Live Vision Active</span>
+                <div id="vision-viewport-host">
+                  <!-- HUD container mounts here dynamically when on Live View tab -->
+                </div>
+
+                <!-- Secondary Controls Strip in Live View -->
+                <div class="camera-controls-strip" style="margin-top:14px;">
+                  <div class="start-stop-group">
+                    <button id="vision-start-safepath" class="btn-start-large" type="button" onclick="document.querySelector('#start-safepath')?.click()">
+                      <div class="btn-play-circle" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      </div>
+                      <div style="text-align:left;">
+                        <div>Start Vision</div>
+                        <div style="font-size:0.75rem; font-weight:500; opacity:0.85;">Begin AI tracking</div>
+                      </div>
+                    </button>
+                    <button id="vision-stop-safepath" class="btn-stop-large" type="button" onclick="document.querySelector('#stop-assistance')?.click()" hidden>
+                      <div class="btn-stop-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                      </div>
+                      <div style="text-align:left;">
+                        <div>Stop</div>
+                        <div style="font-size:0.75rem; font-weight:500; opacity:0.7;">Pause camera</div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div class="extra-actions-row">
+                    <button class="subtle-action-btn" type="button" onclick="document.querySelector('#btn-flip-camera')?.click()" title="Flip Lens">
+                      <span>🔄 Flip Lens</span>
+                    </button>
+                    <button class="subtle-action-btn" type="button" onclick="document.querySelector('#btn-take-snapshot')?.click()" title="AI Snapshot">
+                      <span>📸 Snapshot</span>
+                    </button>
                   </div>
                 </div>
 
-                <div class="voice-strip-card" style="margin-top:16px;">
+                <div class="voice-strip-card" style="margin-top:14px;">
                   <div class="voice-mic-circle">🎙️</div>
                   <div style="flex:1;">
-                    <div style="font-weight:700; font-size:0.92rem;">Listening for commands...</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary);">Speak anytime to query obstacles & distance</div>
+                    <div style="font-weight:700; font-size:0.92rem;">Ask SafePath Assistant</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">Query obstacles, distance & clear paths</div>
                   </div>
                   <button id="talk-to-safepath" class="btn-start-large" style="padding:8px 18px; font-size:0.88rem;" type="button">
                     <span id="talk-btn-label">Voice ON</span>

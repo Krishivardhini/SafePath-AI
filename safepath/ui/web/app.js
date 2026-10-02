@@ -1267,6 +1267,25 @@ function initNavigation() {
       panel.hidden = !isTarget;
     });
 
+    // Relocate camera & HUD viewport to whichever view is currently active
+    const hudContainer = document.querySelector("#hud-container");
+    const homeHost = document.querySelector("#home-viewport-host");
+    const visionHost = document.querySelector("#vision-viewport-host");
+
+    if (targetViewId === "vision-view" && visionHost && hudContainer) {
+      visionHost.appendChild(hudContainer);
+    } else if (targetViewId === "home-view" && homeHost && hudContainer) {
+      homeHost.appendChild(hudContainer);
+    }
+
+    // Sync button states on Live View
+    const vStart = document.querySelector("#vision-start-safepath");
+    const vStop = document.querySelector("#vision-stop-safepath");
+    if (vStart && vStop) {
+      vStart.hidden = isRunning;
+      vStop.hidden = !isRunning;
+    }
+
     updateHeader(targetViewId);
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -1537,6 +1556,11 @@ function initCompanionLiveHUD() {
     isRunning = true;
     startBtn.hidden = true;
     stopBtn.hidden = false;
+    const vStart = document.querySelector("#vision-start-safepath");
+    const vStop = document.querySelector("#vision-stop-safepath");
+    if (vStart) vStart.hidden = true;
+    if (vStop) vStop.hidden = false;
+
     connectWebSocket();
 
     try {
@@ -1585,6 +1609,8 @@ function initCompanionLiveHUD() {
       cameraStreamActive = false;
       startBtn.hidden = false;
       stopBtn.hidden = true;
+      if (vStart) vStart.hidden = false;
+      if (vStop) vStop.hidden = true;
       if (feedStatusLabel) feedStatusLabel.textContent = "STANDBY";
       renderHUD();
       return;
@@ -1600,6 +1626,11 @@ function initCompanionLiveHUD() {
     cameraStreamActive = false;
     startBtn.hidden = false;
     stopBtn.hidden = true;
+    const vStart = document.querySelector("#vision-start-safepath");
+    const vStop = document.querySelector("#vision-stop-safepath");
+    if (vStart) vStart.hidden = false;
+    if (vStop) vStop.hidden = true;
+
     if (feedStatusLabel) feedStatusLabel.textContent = "READY";
     if (fpsLabel) fpsLabel.textContent = "0";
 
