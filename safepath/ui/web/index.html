@@ -1,0 +1,1591 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#06152d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SafePath-AI">
+    <meta name="description" content="SafePath-AI — Assistive Mobility Companion for visually impaired and mobility-challenged users. Real-time YOLOv8 object detection, monocular depth estimation, spatial path assistance, and OpenStreetMap walking navigation.">
+    <title>SafePath-AI — Assistive Mobility Companion</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=2.2">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <script>
+      // Clear old PWA service worker caches if obsolete
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.update();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            if (name !== 'safepath-v2.2-multilingual-perm') caches.delete(name);
+          }
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Accessibility Skip link -->
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_content">Skip to main content</a>
+
+    <!-- Visual Haptic Ripple Effect Overlay -->
+    <div id="haptic-ripple-overlay" class="haptic-ripple" aria-hidden="true"></div>
+
+    <div class="app-container">
+      
+      <!-- ================================================================= -->
+      <!-- LEFT SIDEBAR (Matching Mockup Left Navy Panel)                    -->
+      <!-- ================================================================= -->
+      <aside class="app-sidebar" aria-label="Main Navigation">
+        <div>
+          <!-- Brand Logo Header -->
+          <div class="sidebar-brand-wrapper">
+            <div class="brand-icon-circle" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="5" r="2.5"/>
+                <path d="m9 20 3-6 2 3 2 3"/>
+                <path d="m6 10 3 3 3-2 3 2"/>
+                <path d="M12 7.5v6.5"/>
+              </svg>
+            </div>
+            <div class="brand-title-group">
+              <span class="brand-title">SafePath<span class="brand-ai">-AI</span></span>
+              <span class="brand-tagline" data-i18n="brand_sub">Assistive Mobility Companion</span>
+            </div>
+          </div>
+
+          <!-- Navigation Links -->
+          <nav class="sidebar-nav" role="tablist">
+            <button id="desk-tab-home" class="sidebar-nav-item is-active" data-view="home-view" type="button" role="tab" aria-selected="true">
+              <span class="nav-icon" aria-hidden="true">🏠</span>
+              <span data-i18n="nav_home">Home</span>
+            </button>
+            <button id="desk-tab-vision" class="sidebar-nav-item" data-view="vision-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">📷</span>
+              <span data-i18n="nav_vision">Live View</span>
+            </button>
+            <button id="desk-tab-objects" class="sidebar-nav-item" data-view="objects-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">🎯</span>
+              <span data-i18n="nav_objects">Detections</span>
+            </button>
+            <button id="desk-tab-navigation" class="sidebar-nav-item" data-view="navigation-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">📍</span>
+              <span data-i18n="nav_navigation">Navigation</span>
+            </button>
+            <button id="desk-tab-path" class="sidebar-nav-item" data-view="path-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">🧭</span>
+              <span data-i18n="nav_path">Path Assistant</span>
+            </button>
+            <button id="desk-tab-voice" class="sidebar-nav-item" data-view="voice-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">🎙️</span>
+              <span data-i18n="nav_voice">Ask SafePath</span>
+            </button>
+            <button id="desk-tab-safety" class="sidebar-nav-item" data-view="safety-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">🛡️</span>
+              <span data-i18n="nav_safety">Safety Engine</span>
+            </button>
+            <button id="desk-tab-history" class="sidebar-nav-item" data-view="history-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">🕒</span>
+              <span data-i18n="nav_history">History</span>
+            </button>
+            <button id="desk-tab-accessibility" class="sidebar-nav-item" data-view="accessibility-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">♿</span>
+              <span data-i18n="nav_accessibility">Accessibility</span>
+            </button>
+            <button id="desk-tab-settings" class="sidebar-nav-item" data-view="settings-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">⚙️</span>
+              <span data-i18n="nav_settings">Settings</span>
+            </button>
+            <button id="desk-tab-about" class="sidebar-nav-item" data-view="about-view" type="button" role="tab" aria-selected="false">
+              <span class="nav-icon" aria-hidden="true">ℹ️</span>
+              <span data-i18n="nav_about">About</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sidebar Wavy Footer -->
+        <div class="sidebar-footer">
+          <div class="sidebar-footer-content">
+            <p class="sidebar-footer-quote">Safer Paths<br>for a Brighter Tomorrow</p>
+            <span class="sidebar-footer-sub">AI Mobility Engine</span>
+          </div>
+          <svg class="sidebar-wave-svg" viewBox="0 0 200 60" preserveAspectRatio="none" fill="none">
+            <path d="M0 30 C 50 10, 100 50, 150 20 C 180 5, 200 25, 200 25 L 200 60 L 0 60 Z" fill="#1d68f6"/>
+          </svg>
+        </div>
+      </aside>
+
+      <!-- ================================================================= -->
+      <!-- MAIN WORKSPACE & TOP HEADER                                       -->
+      <!-- ================================================================= -->
+      <div class="app-main-shell">
+        
+        <!-- Top App Navigation Header -->
+        <header class="app-header" role="banner">
+          <div class="header-left">
+            <div class="header-page-title-group">
+              <h1 id="header-page-title" class="header-page-title">
+                <span id="header-page-icon">🏠</span>
+                <span id="header-page-name">Home</span>
+              </h1>
+              <span id="header-page-desc" class="header-page-sub">Live camera feed & real-time surroundings</span>
+            </div>
+          </div>
+
+          <div class="header-right">
+            <!-- System Active Green Pill Badge -->
+            <button id="backend-status-badge" class="system-status-pill is-offline" type="button" title="View device connection details">
+              <span class="pulse-dot" aria-hidden="true"></span>
+              <span id="backend-status-label" data-i18n="system_active">System Active</span>
+            </button>
+
+            <!-- Language Selector Dropdown -->
+            <div class="header-lang-wrapper" title="Change Assistant Language">
+              <span aria-hidden="true">🌐</span>
+              <select id="header-language-select" aria-label="Change Assistant Language">
+                <option value="en">English</option>
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                <option value="mr">मराठी (Marathi)</option>
+                <option value="bn">বাংলা (Bengali)</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+
+            <!-- Mobile Phone Connect Button -->
+            <button id="btn-mobile-connect" class="header-icon-btn" type="button" title="Connect Phone / Tablet over Wi-Fi" aria-label="Connect Mobile">
+              <span aria-hidden="true">📱</span>
+            </button>
+
+            <!-- Flashlight / Torch Toggle -->
+            <button id="btn-toggle-torch" class="header-icon-btn" type="button" title="Toggle Flashlight / Torch" aria-label="Toggle Torch" style="display:none;">
+              <span aria-hidden="true">🔦</span>
+            </button>
+
+            <!-- Flip Camera (Front / Back) Toggle -->
+            <button id="btn-flip-camera" class="header-icon-btn" type="button" title="Flip Camera Lens" aria-label="Flip Camera">
+              <span aria-hidden="true">🔄</span>
+            </button>
+
+            <!-- Extra-Large Text Toggle -->
+            <button id="toggle-large-text" class="header-icon-btn" type="button" title="Toggle Extra-Large Accessible Text (L)" aria-label="Toggle Large Text">
+              <span aria-hidden="true" style="font-weight:800; font-size:0.9rem;">A+</span>
+            </button>
+
+            <!-- High Contrast Mode Toggle -->
+            <button id="toggle-high-contrast" class="header-icon-btn" type="button" title="Toggle High Contrast Mode (C)" aria-label="Toggle High Contrast">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"/><path d="M12 2v20a10 10 0 0 0 0-20z"/>
+              </svg>
+            </button>
+
+            <!-- Spatial Audio Sonar Sound Synth Toggle -->
+            <button id="toggle-sound-effects" class="header-icon-btn is-active" type="button" title="Toggle Spatial Audio Synth & Sonar Beeps (S)" aria-label="Toggle Sonar Audio">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </button>
+
+            <!-- Settings Quick Action -->
+            <button id="btn-quick-settings" class="header-icon-btn" data-view="settings-view" type="button" title="Settings & Calibration" aria-label="Open Settings">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+
+            <!-- User Profile Avatar Pill / Auth Trigger -->
+            <button id="btn-open-auth" class="user-profile-pill" type="button" title="Sign In or User Profile">
+              <div class="user-avatar-circle" aria-hidden="true">👤</div>
+              <span id="user-display-name">User</span>
+              <span aria-hidden="true" style="font-size:0.75rem; color:var(--text-muted)">⌵</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Main Page Content Workspace -->
+        <main id="main-content" class="page-content-area">
+          
+          <!-- =============================================================== -->
+          <!-- 1. HOME VIEW (Overview + Live Feed + Right Column Status)        -->
+          <!-- =============================================================== -->
+          <section id="home-view" class="view-panel is-active" aria-labelledby="home-title" role="tabpanel">
+            <div class="dashboard-grid">
+              
+              <!-- Left 65%: Live Camera Feed Card -->
+              <div class="clean-card camera-feed-card">
+                <div class="card-header-row">
+                  <div class="card-title-wrap">
+                    <span class="card-icon" aria-hidden="true">📷</span>
+                    <h2 class="card-title" data-i18n="live_camera_feed">Live Camera Feed</h2>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="card-badge badge-green">HD 1080p</span>
+                    <span id="feed-status-label" class="card-badge badge-blue">READY</span>
+                  </div>
+                </div>
+
+                <!-- Video Viewport Frame -->
+                <div class="camera-viewport-frame" id="hud-container">
+                  <video id="camera-preview" class="camera-video-feed" autoplay muted playsinline aria-label="Live Camera Stream" hidden></video>
+                  <canvas id="hud-canvas" class="hud-canvas-layer" width="640" height="480" aria-label="Live Obstacle Radar Canvas HUD"></canvas>
+                  
+                  <!-- Floating Path Status Banner -->
+                  <div id="floating-feed-banner" class="floating-feed-banner">
+                    <span aria-hidden="true">✓</span>
+                    <span id="floating-feed-text">Path is clear</span>
+                  </div>
+
+                  <!-- Live / Recording Tag -->
+                  <div class="feed-live-indicator" id="feed-live-badge">
+                    <span class="rec-dot"></span>
+                    <span id="live-indicator-text">Live</span>
+                  </div>
+                </div>
+
+                <div id="camera-error" class="info-callout-box" style="background:#fee2e2; color:#b91c1c; border:1px solid #f87171;" role="alert" hidden></div>
+
+                <!-- Bottom Control Strip -->
+                <div class="camera-controls-strip">
+                  <div class="start-stop-group">
+                    <button id="start-safepath" class="btn-start-large" type="button">
+                      <div class="btn-play-circle" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      </div>
+                      <div style="text-align:left;">
+                        <div data-i18n="start_btn">Start</div>
+                        <div style="font-size:0.75rem; font-weight:500; opacity:0.85;" data-i18n="begin_assistance">Begin assistance</div>
+                      </div>
+                    </button>
+
+                    <button id="stop-assistance" class="btn-stop-large" type="button" hidden>
+                      <div class="btn-stop-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                      </div>
+                      <div style="text-align:left;">
+                        <div data-i18n="stop_btn">Stop</div>
+                        <div style="font-size:0.75rem; font-weight:500; opacity:0.7;" data-i18n="end_session">End session</div>
+                      </div>
+                    </button>
+                  </div>
+
+                  <!-- Voice Assistance Strip Card -->
+                  <div class="voice-strip-card">
+                    <div class="voice-mic-circle" aria-hidden="true">🎙️</div>
+                    <div class="voice-strip-info">
+                      <div class="voice-strip-title-row">
+                        <span class="voice-strip-title" data-i18n="voice_assistance">Voice Assistance</span>
+                        <span class="card-badge badge-green" style="font-size:0.68rem; padding:2px 6px;">ON</span>
+                      </div>
+                      <span class="voice-strip-sub" id="voice-strip-sub" data-i18n="listening_commands">Listening for your commands...</span>
+                    </div>
+                  </div>
+
+                  <!-- Snapshot & Upload Actions -->
+                  <div class="extra-actions-row">
+                    <button id="btn-take-snapshot" class="subtle-action-btn" type="button" title="Capture photo & run spatial breakdown">
+                      <span>📸</span>
+                      <span data-i18n="snapshot_btn">Snapshot</span>
+                    </button>
+                    <label class="subtle-action-btn" for="upload-image-input" style="cursor:pointer;" title="Upload image for YOLO analysis">
+                      <span>📁</span>
+                      <span data-i18n="upload_btn">Upload</span>
+                      <input id="upload-image-input" type="file" accept="image/*" class="sr-only">
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Live Telemetry Strip -->
+                <div class="telemetry-strip" role="status" aria-label="System Telemetry">
+                  <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="fps_rate">FPS Rate</span>
+                    <span class="telemetry-value" id="telemetry-fps">0</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="tracked_objects">Tracked Objects</span>
+                    <span class="telemetry-value" id="telemetry-object-count">0 objects</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="priority_hazard">Priority Hazard</span>
+                    <span class="telemetry-value" id="telemetry-highest-risk" style="color:var(--brand-emerald);">NONE (Safe)</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label" data-i18n="pipeline_latency">Pipeline Latency</span>
+                    <span class="telemetry-value" id="telemetry-latency">0 ms</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right 35%: Detected Objects, Voice Instruction, Nav Status -->
+              <div class="right-side-panel">
+                
+                <!-- 1. Detected Objects Card -->
+                <div class="clean-card detected-objects-card">
+                  <div class="card-header-row">
+                    <div class="card-title-wrap">
+                      <span class="card-icon" aria-hidden="true">🎯</span>
+                      <h3 class="card-title" data-i18n="detected_objects_title">Detected Objects</h3>
+                    </div>
+                    <span id="detected-objects-count" class="card-badge badge-gray">Total: 0</span>
+                  </div>
+
+                  <!-- Empty State -->
+                  <div id="detected-empty-state" class="detected-empty-state">
+                    <div class="empty-target-icon" aria-hidden="true">🎯</div>
+                    <div class="empty-title" data-i18n="no_objects_detected">No objects detected</div>
+                    <div class="empty-sub" data-i18n="env_clear">The environment is clear.</div>
+                  </div>
+
+                  <!-- Live List State -->
+                  <div id="detected-items-list" class="detected-items-list" style="display:none;"></div>
+                </div>
+
+                <!-- 2. Voice Instruction Card -->
+                <div class="clean-card voice-instruction-card">
+                  <div class="voice-inst-header">
+                    <div class="card-title-wrap">
+                      <div class="speaker-pill-icon" aria-hidden="true">🔊</div>
+                      <h3 class="card-title" style="color:var(--brand-purple);" data-i18n="voice_instruction_title">Voice Instruction</h3>
+                    </div>
+                    <button id="btn-repeat-guidance" class="subtle-action-btn" style="padding:4px 10px; font-size:0.75rem;" type="button" title="Hear again">
+                      <span data-i18n="hear_again">Hear Again</span>
+                    </button>
+                  </div>
+
+                  <!-- Animated Sound Waveform -->
+                  <div class="waveform-container" aria-hidden="true">
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                    <span class="waveform-bar"></span>
+                  </div>
+
+                  <p id="current-guidance" class="voice-inst-quote">"Path is clear."</p>
+                  <p id="guidance-timestamp" style="font-size:0.75rem; color:var(--text-secondary); text-align:center; margin-top:4px;">Live vision standby</p>
+                  <span id="guidance-proximity-pill" class="sr-only">SAFE</span>
+                </div>
+
+                <!-- 3. Navigation Status Card -->
+                <div class="clean-card nav-status-card">
+                  <div class="card-header-row">
+                    <div class="card-title-wrap">
+                      <span class="card-icon" aria-hidden="true">🧭</span>
+                      <h3 class="card-title" data-i18n="nav_status_title">Navigation Status</h3>
+                    </div>
+                    <span id="nav-status-pill" class="card-badge badge-green">Safe</span>
+                  </div>
+                  <div class="nav-status-body">
+                    <div class="nav-status-icon-box" id="nav-status-icon">🚶</div>
+                    <div class="nav-status-text-wrap">
+                      <span class="nav-status-headline" id="nav-status-headline" data-i18n="continue_walking">Continue walking</span>
+                      <span class="nav-status-subline" id="nav-status-subline" data-i18n="no_obstacles_detected">No obstacles detected.</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 2. LIVE VIEW (Full Camera Stream + Bounding Boxes)              -->
+          <!-- =============================================================== -->
+          <section id="vision-view" class="view-panel" aria-labelledby="vision-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card camera-feed-card">
+                <div class="card-header-row">
+                  <div class="card-title-wrap">
+                    <span class="card-icon">📷</span>
+                    <h2 class="card-title">Live Vision Stream</h2>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button id="btn-toggle-corridor" class="subtle-action-btn" type="button">
+                      <span>Corridor: <strong id="corridor-toggle-status">ON</strong></span>
+                    </button>
+                    <button id="btn-toggle-sonar" class="subtle-action-btn" type="button">
+                      <span>Sonar: <strong id="sonar-toggle-status">ON</strong></span>
+                    </button>
+                    <button id="btn-describe-scene" class="subtle-action-btn" type="button">
+                      <span>🌐 Describe</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="camera-viewport-frame">
+                  <!-- Video & Canvas are shared / synced -->
+                  <div class="floating-feed-banner" style="top:14px; left:14px;">
+                    <span id="vision-floating-text">Live Vision Active</span>
+                  </div>
+                </div>
+
+                <div class="voice-strip-card" style="margin-top:16px;">
+                  <div class="voice-mic-circle">🎙️</div>
+                  <div style="flex:1;">
+                    <div style="font-weight:700; font-size:0.92rem;">Listening for commands...</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary);">Speak anytime to query obstacles & distance</div>
+                  </div>
+                  <button id="talk-to-safepath" class="btn-start-large" style="padding:8px 18px; font-size:0.88rem;" type="button">
+                    <span id="talk-btn-label">Voice ON</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right Panel in Live View -->
+              <div class="right-side-panel">
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:12px;">Active Detections</h3>
+                  <div id="vision-objects-list" class="detected-items-list">
+                    <div class="detected-empty-state" style="padding:16px;">
+                      <span style="font-size:1.5rem;">🔎</span>
+                      <div class="empty-title" style="margin-top:6px;">Waiting for camera stream</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="clean-card voice-instruction-card">
+                  <h3 class="card-title" style="color:var(--brand-purple);">Voice Feedback</h3>
+                  <p id="vision-guidance-text" class="voice-inst-quote">"Path is clear."</p>
+                </div>
+
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:8px;">Steering Advice</h3>
+                  <p id="path-guidance" style="font-size:0.92rem; font-weight:600; color:var(--brand-emerald);">Path ahead appears clear.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 3. DETECTIONS VIEW (All 80 Classes Explorer)                    -->
+          <!-- =============================================================== -->
+          <section id="objects-view" class="view-panel" aria-labelledby="objects-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card">
+                <div class="card-header-row">
+                  <div class="card-title-wrap">
+                    <span class="card-icon">🎯</span>
+                    <h2 class="card-title">Live Object Explorer</h2>
+                  </div>
+                  <span id="vision-service-status" class="card-badge badge-blue">YOLOv8 Active</span>
+                </div>
+
+                <div style="overflow-x:auto; margin-top:12px;">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
+                    <thead>
+                      <tr style="border-bottom:2px solid var(--border-color); color:var(--text-secondary);">
+                        <th style="padding:10px 12px;">Object Class</th>
+                        <th style="padding:10px 12px;">Track ID</th>
+                        <th style="padding:10px 12px;">Confidence</th>
+                        <th style="padding:10px 12px;">Estimated Range</th>
+                        <th style="padding:10px 12px;">Position</th>
+                        <th style="padding:10px 12px;">Movement</th>
+                      </tr>
+                    </thead>
+                    <tbody id="live-object-rows">
+                      <tr>
+                        <td colspan="6" style="padding:20px; text-align:center; color:var(--text-secondary);">Waiting for live camera detections.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="right-side-panel">
+                <div class="clean-card voice-instruction-card">
+                  <h3 class="card-title" style="color:var(--brand-purple);">Spoken Breakdown</h3>
+                  <p id="detections-guidance-quote" class="voice-inst-quote">"No objects detected."</p>
+                </div>
+
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:10px;">Assistance Verdict</h3>
+                  <p id="snapshot-verdict-text" style="font-size:0.88rem; line-height:1.5; color:var(--text-secondary);">Start live camera to compute continuous object trajectories and pinhole depth.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 4. NAVIGATION VIEW (Leaflet Map + RouteBot + Turn-by-Turn)       -->
+          <!-- =============================================================== -->
+          <section id="navigation-view" class="view-panel" aria-labelledby="nav-title" role="tabpanel" hidden>
+            <div class="nav-layout-grid">
+              
+              <!-- Left Column: Search, GPS, RouteBot, Turn-by-Turn -->
+              <div style="display:flex; flex-direction:column; gap:16px;">
+                
+                <!-- Live Environmental Safety Integration Card -->
+                <div class="clean-card" style="border-left: 4px solid var(--brand-emerald);">
+                  <div class="card-header-row" style="margin-bottom:8px;">
+                    <div class="card-title-wrap">
+                      <span class="pulse-dot" style="background:var(--brand-emerald);"></span>
+                      <h3 class="card-title" style="font-size:0.95rem;">Live Vision Safety Integration</h3>
+                    </div>
+                    <span id="nav-safety-status-pill" class="card-badge badge-green">SAFE</span>
+                  </div>
+                  <p id="navigation-safety" style="font-size:0.86rem; color:var(--text-secondary); line-height:1.4;">
+                    Waiting for current camera data. Start Live Vision to combine routing with real-time obstacle alerts.
+                  </p>
+                </div>
+
+                <!-- SafePath RouteBot Card -->
+                <div class="clean-card" id="nav-chatbot-card">
+                  <div class="card-header-row" style="margin-bottom:8px;">
+                    <div class="card-title-wrap">
+                      <span style="font-size:1.3rem;">🤖</span>
+                      <div>
+                        <h3 class="card-title">SafePath RouteBot</h3>
+                        <span style="font-size:0.72rem; color:var(--brand-blue); font-weight:600;">Google Maps AI Navigator · Zero API Key</span>
+                      </div>
+                    </div>
+                    <button id="btn-clear-chat" class="subtle-action-btn" style="padding:4px 8px;" type="button" title="Clear Chat">🗑️</button>
+                  </div>
+
+                  <!-- Quick Chips -->
+                  <div id="nav-chatbot-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;"></div>
+
+                  <!-- Messages Stream -->
+                  <div class="chatbot-stream-box" id="chatbot-messages-stream">
+                    <div class="chat-bubble bot">
+                      👋 Hello! Tell me where you want to go. I will find the destination and lead you straight to Google Maps walking navigation!
+                    </div>
+                  </div>
+
+                  <!-- Input Form -->
+                  <form id="nav-chat-form" style="display:flex; gap:8px; margin-top:8px;">
+                    <button id="nav-chat-mic-btn" class="header-icon-btn" type="button" title="Speak destination">🎙️</button>
+                    <input id="nav-chat-input" class="auth-input-field" type="text" placeholder="Where do you want to go? (e.g. 'Take me to City Hospital')...">
+                    <button type="submit" class="btn-start-large" style="padding:0 18px; border-radius:var(--radius-md);">Send</button>
+                  </form>
+
+                  <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+                    <label class="ios-switch-label" style="transform:scale(0.85); transform-origin:left center;">
+                      <input id="toggle-auto-open-gmaps" type="checkbox">
+                      <span class="ios-slider"></span>
+                    </label>
+                    <span style="font-size:0.78rem; font-weight:600; color:var(--text-secondary);">⚡ Auto-open Google Maps on match</span>
+                  </div>
+                </div>
+
+                <!-- GPS & Destination Search Card -->
+                <div class="clean-card">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <h3 class="card-title">📍 Current Location & Route</h3>
+                    <button id="gps-start" class="subtle-action-btn" type="button">📍 Get Location</button>
+                  </div>
+                  <span id="gps-status" style="font-size:0.8rem; color:var(--text-secondary); display:block; margin-bottom:12px;">Location permission required.</span>
+
+                  <form id="route-search-form" style="display:flex; gap:8px; margin-bottom:12px;">
+                    <input id="destination-query" class="auth-input-field" type="search" placeholder="Enter destination (library, cafe, station)..." required>
+                    <button class="btn-start-large" style="padding:0 18px; border-radius:var(--radius-md);" type="submit">Search</button>
+                  </form>
+
+                  <div id="destination-results" style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;"></div>
+                  <div id="route-summary" style="padding:10px 14px; border-radius:var(--radius-md); background:var(--bg-card-subtle); font-size:0.85rem; font-weight:600;">No route requested.</div>
+                  <p id="navigation-voice" class="voice-inst-quote" style="font-size:0.92rem; margin-top:8px;"></p>
+                  <div id="nav-turn-steps-list" style="display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+                </div>
+
+              </div>
+
+              <!-- Right Column: Leaflet Map Container -->
+              <div class="clean-card" style="padding:16px;">
+                <div id="navigation-map"></div>
+                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; text-align:center;">
+                  Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" style="color:var(--brand-blue);">OpenStreetMap</a> · Routing by OSRM Foot Profile · Geocoding by Nominatim
+                </p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 5. PATH ASSISTANT (Corridor Occupancy & Steering)               -->
+          <!-- =============================================================== -->
+          <section id="path-view" class="view-panel" aria-labelledby="path-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card">
+                <div class="card-header-row">
+                  <div class="card-title-wrap">
+                    <span class="card-icon">🧭</span>
+                    <h2 class="card-title">Forward Walking Corridor</h2>
+                  </div>
+                  <span id="path-safety-state" class="card-badge badge-green">SAFE</span>
+                </div>
+
+                <div style="padding:24px; text-align:center; background:var(--bg-card-subtle); border-radius:var(--radius-md); margin-bottom:20px;">
+                  <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-secondary);">CORRIDOR OCCUPANCY</span>
+                  <h3 id="path-status-heading" style="font-size:1.85rem; font-weight:900; color:var(--text-primary); margin:8px 0 4px;">PATH CLEAR</h3>
+                  <p id="path-guidance-full" style="font-size:1.05rem; font-weight:700; color:var(--brand-emerald);">Path ahead appears clear.</p>
+                </div>
+
+                <h3 class="card-title" style="margin-bottom:12px;">Spatial Walking Zones</h3>
+                <p id="path-zones" style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:14px;">Left: 0 · Center: 0 · Right: 0</p>
+                
+                <div style="display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:12px;">
+                  <div class="clean-card" style="padding:14px; background:var(--bg-card-subtle);" id="zone-vis-left">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">LEFT PERIPHERAL</div>
+                    <div id="zone-status-left" style="font-weight:800; margin:6px 0; color:var(--brand-emerald);">CLEAR</div>
+                    <ul id="zone-list-left" style="font-size:0.78rem; list-style:none;"><li>No obstacles</li></ul>
+                  </div>
+                  <div class="clean-card" style="padding:14px; background:var(--brand-blue-light); border:2px solid var(--brand-blue);" id="zone-vis-center">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--brand-blue);">WALKING PATH (34%)</div>
+                    <div id="zone-status-center" style="font-weight:800; margin:6px 0; color:var(--brand-emerald);">CLEAR</div>
+                    <ul id="zone-list-center" style="font-size:0.78rem; list-style:none;"><li>No forward obstacles</li></ul>
+                  </div>
+                  <div class="clean-card" style="padding:14px; background:var(--bg-card-subtle);" id="zone-vis-right">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">RIGHT PERIPHERAL</div>
+                    <div id="zone-status-right" style="font-weight:800; margin:6px 0; color:var(--brand-emerald);">CLEAR</div>
+                    <ul id="zone-list-right" style="font-size:0.78rem; list-style:none;"><li>No obstacles</li></ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="right-side-panel">
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:12px;">Forward Obstacles</h3>
+                  <ul id="path-obstacles" style="display:flex; flex-direction:column; gap:8px; font-size:0.88rem; list-style:none;">
+                    <li>No current forward obstacles detected.</li>
+                  </ul>
+                </div>
+                <button id="speak-path-guidance" class="btn-start-large" style="width:100%; justify-content:center;" type="button">
+                  <span>🔊 Speak Path Status</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 6. ASK SAFEPATH (Conversational Voice Assistant)                -->
+          <!-- =============================================================== -->
+          <section id="voice-view" class="view-panel" aria-labelledby="voice-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card" style="text-align:center; padding:36px 24px;">
+                <h2 class="card-title" style="font-size:1.35rem; margin-bottom:8px;">Ask SafePath Hands-Free</h2>
+                <p style="font-size:0.88rem; color:var(--text-secondary); max-width:500px; margin:0 auto 24px;">
+                  Tap the microphone or speak naturally to query obstacles, side corridors, or approaching hazards.
+                </p>
+
+                <button id="talk-to-safepath-full" class="btn-start-large" style="width:84px; height:84px; border-radius:50%; margin:0 auto 16px; justify-content:center; font-size:2rem;" type="button" aria-label="Start Voice Listening">
+                  🎙️
+                </button>
+                <p id="voice-status-full" style="font-size:0.85rem; font-weight:600; color:var(--brand-blue);">Tap microphone to speak</p>
+
+                <form id="question-form-full" style="display:flex; gap:8px; max-width:560px; margin:24px auto 0;">
+                  <input id="voice-question-full" class="auth-input-field" type="text" placeholder="Or type a question for SafePath...">
+                  <button type="submit" class="btn-start-large" style="padding:0 20px; border-radius:var(--radius-md);">Ask</button>
+                </form>
+              </div>
+
+              <div class="right-side-panel">
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:12px;">Suggested Spatial Questions</h3>
+                  <div class="quick-query-grid" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
+
+                <div class="clean-card voice-instruction-card">
+                  <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">YOU ASKED:</div>
+                  <p id="asked-question" style="font-weight:700; margin:4px 0 10px;">"Is my path clear?"</p>
+                  <div style="font-size:0.75rem; font-weight:700; color:var(--brand-purple);">SAFEPATH ANSWER:</div>
+                  <p id="voice-answer" class="voice-inst-quote" style="font-size:0.95rem; margin-top:4px;">"Live vision has not started."</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 7. SAFETY ENGINE (Rule-Based Risk Scoring)                       -->
+          <!-- =============================================================== -->
+          <section id="safety-view" class="view-panel" aria-labelledby="safety-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card">
+                <div class="card-header-row">
+                  <div class="card-title-wrap">
+                    <span class="card-icon">🛡️</span>
+                    <h2 class="card-title">Computer Vision Safety Engine</h2>
+                  </div>
+                  <div id="safety-state" class="card-badge badge-green">SAFE</div>
+                </div>
+
+                <div id="safety-details" style="padding:16px; border-radius:var(--radius-md); background:var(--bg-card-subtle); font-size:0.9rem; line-height:1.6; margin-bottom:20px;">
+                  SafePath continuously scores each detected object against distance, category threat weights, and spatial corridor placement (0-100 risk score).
+                </div>
+
+                <div class="clean-card" style="background:var(--brand-blue-light); border:1px solid rgba(29, 104, 246, 0.25);">
+                  <h3 class="card-title" style="color:var(--brand-blue); margin-bottom:10px;">👑 Active Priority Hazard (Winning Obstacle)</h3>
+                  <p id="safety-winner-text" class="voice-inst-quote" style="text-align:left; font-size:1.15rem; margin-bottom:14px;">"No active priority hazard."</p>
+                  
+                  <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; font-size:0.85rem;">
+                    <div><span style="color:var(--text-secondary);">Risk Score:</span> <strong id="safety-winner-score">0 / 100</strong></div>
+                    <div><span style="color:var(--text-secondary);">Level:</span> <strong id="safety-winner-level" style="color:var(--brand-emerald);">LOW</strong></div>
+                    <div><span style="color:var(--text-secondary);">Position:</span> <strong id="safety-winner-pos">CENTER</strong></div>
+                    <div><span style="color:var(--text-secondary);">Distance:</span> <strong id="safety-winner-dist">—</strong></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="right-side-panel">
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:10px;">Feedback Channels</h3>
+                  <div style="display:flex; flex-direction:column; gap:14px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:700; font-size:0.88rem;">Voice Synthesis (TTS)</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">Spoken alerts in active language</div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="voice-enabled" type="checkbox" checked>
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:700; font-size:0.88rem;">Haptic & Pulse Alerts</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">Vibration motor & screen ripple</div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="haptic-enabled" type="checkbox" checked>
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 8. HISTORY (Chronological Event Trail)                          -->
+          <!-- =============================================================== -->
+          <section id="history-view" class="view-panel" aria-labelledby="history-title" role="tabpanel" hidden>
+            <div class="clean-card">
+              <div class="card-header-row">
+                <div class="card-title-wrap">
+                  <span class="card-icon">🕒</span>
+                  <h2 class="card-title">Session Detection History</h2>
+                </div>
+                <button id="btn-clear-history" class="subtle-action-btn" type="button">🗑️ Clear History</button>
+              </div>
+              <ol id="live-history" style="padding-left:24px; line-height:2.2; font-size:0.88rem; color:var(--text-primary);">
+                <li>Waiting for live detections.</li>
+              </ol>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 9. ACCESSIBILITY VIEW                                           -->
+          <!-- =============================================================== -->
+          <section id="accessibility-view" class="view-panel" aria-labelledby="acc-title" role="tabpanel" hidden>
+            <div class="dashboard-grid">
+              <div class="clean-card">
+                <h2 class="card-title" style="margin-bottom:16px;">🌐 Comfortable Guidance Language</h2>
+                <div class="lang-card-grid" role="radiogroup" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+                  <button class="subtle-action-btn lang-select-card is-active" data-lang="en" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>English</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="te" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>తెలుగు (Telugu)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="hi" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>हिन्दी (Hindi)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="ta" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>தமிழ் (Tamil)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="kn" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>ಕನ್ನಡ (Kannada)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="mr" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>मराठी (Marathi)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="bn" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>বাংলা (Bengali)</strong><span>✓</span>
+                  </button>
+                  <button class="subtle-action-btn lang-select-card" data-lang="es" type="button" style="justify-content:space-between; padding:12px;">
+                    <strong>Español</strong><span>✓</span>
+                  </button>
+                </div>
+
+                <div style="margin-top:24px;">
+                  <h3 class="card-title" style="margin-bottom:12px;">🔊 Speech Rate Multiplier</h3>
+                  <div style="display:flex; align-items:center; gap:16px;">
+                    <input id="speech-rate" type="range" min="0.7" max="1.3" step="0.1" value="1.0" style="flex:1;">
+                    <output id="speech-rate-value" style="font-weight:700; width:44px;">1.0×</output>
+                    <button id="btn-test-speech" class="subtle-action-btn" type="button">🔊 Test</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="right-side-panel">
+                <div class="clean-card">
+                  <h3 class="card-title" style="margin-bottom:16px;">Sensory Preferences</h3>
+                  <div style="display:flex; flex-direction:column; gap:16px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:700; font-size:0.88rem;">High-Contrast Mode</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">Deep black with high contrast borders</div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="acc-high-contrast" type="checkbox">
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:700; font-size:0.88rem;">Extra-Large Text</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">Increase font scale across screens</div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="acc-large-text" type="checkbox">
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:700; font-size:0.88rem;">Spatial Audio Sonar</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">Acoustic radar ticks proportional to distance</div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="acc-sonar" type="checkbox" checked>
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 10. SETTINGS VIEW (Matching Screenshot 2)                       -->
+          <!-- =============================================================== -->
+          <section id="settings-view" class="view-panel" aria-labelledby="settings-title" role="tabpanel" hidden>
+            
+            <!-- Settings Sub Navigation Tabs -->
+            <div class="settings-subnav-tabs" role="tablist">
+              <button id="tab-btn-general" class="settings-tab-btn is-active" type="button">General</button>
+              <button id="tab-btn-detection" class="settings-tab-btn" type="button">Detection</button>
+              <button id="tab-btn-voice" class="settings-tab-btn" type="button">Voice & Audio</button>
+              <button id="tab-btn-navigation" class="settings-tab-btn" type="button">Navigation</button>
+              <button id="tab-btn-camera" class="settings-tab-btn" type="button">Camera</button>
+            </div>
+
+            <div class="dashboard-grid">
+              
+              <!-- Left 65%: Settings Form Panes -->
+              <div class="clean-card">
+                
+                <!-- 1. GENERAL TAB -->
+                <div id="set-pane-general" class="settings-pane">
+                  <div style="margin-bottom:20px;">
+                    <h2 class="card-title" style="font-size:1.15rem;">General Settings</h2>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">Manage app behavior and preferences</p>
+                  </div>
+
+                  <div class="settings-group-list">
+                    <!-- Theme Toggle -->
+                    <div class="setting-row-item">
+                      <div class="setting-info-wrap">
+                        <span class="setting-lead-icon">☀️</span>
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Theme</span>
+                          <span class="setting-desc">Choose your preferred app theme</span>
+                        </div>
+                      </div>
+                      <div class="theme-segmented-switch">
+                        <button id="theme-toggle-light" class="theme-seg-btn is-active" type="button">
+                          <span>☀️ Light</span>
+                        </button>
+                        <button id="theme-toggle-dark" class="theme-seg-btn" type="button">
+                          <span>🌙 Dark</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Language Select -->
+                    <div class="setting-row-item">
+                      <div class="setting-info-wrap">
+                        <span class="setting-lead-icon">🌐</span>
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Language</span>
+                          <span class="setting-desc">Select your preferred language</span>
+                        </div>
+                      </div>
+                      <select id="language-select" class="styled-select">
+                        <option value="en">English</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="es">Español</option>
+                      </select>
+                    </div>
+
+                    <!-- Notifications Toggle -->
+                    <div class="setting-row-item">
+                      <div class="setting-info-wrap">
+                        <span class="setting-lead-icon">🔔</span>
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Notifications</span>
+                          <span class="setting-desc">Enable or disable system notifications</span>
+                        </div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="set-notifications" type="checkbox" checked>
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+
+                    <!-- Vibration Alerts Toggle -->
+                    <div class="setting-row-item">
+                      <div class="setting-info-wrap">
+                        <span class="setting-lead-icon">📳</span>
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Vibration Alerts</span>
+                          <span class="setting-desc">Get vibration alerts for important events</span>
+                        </div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="set-vibrations" type="checkbox" checked>
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+
+                    <!-- Auto Start Toggle -->
+                    <div class="setting-row-item">
+                      <div class="setting-info-wrap">
+                        <span class="setting-lead-icon">🎯</span>
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Auto Start</span>
+                          <span class="setting-desc">Start the app automatically when device boots</span>
+                        </div>
+                      </div>
+                      <label class="ios-switch-label">
+                        <input id="set-autostart" type="checkbox">
+                        <span class="ios-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="info-callout-box">
+                    <span>ℹ️</span>
+                    <span>Your settings are saved automatically.</span>
+                  </div>
+
+                  <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                    <button id="btn-save-general-settings" class="btn-start-large" style="padding:10px 24px; border-radius:var(--radius-md);" type="button">
+                      💾 Save Changes
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 2. DETECTION TAB -->
+                <div id="set-pane-detection" class="settings-pane" hidden>
+                  <form id="system-settings-form">
+                    <div style="margin-bottom:20px;">
+                      <h2 class="card-title" style="font-size:1.15rem;">Computer Vision Calibration</h2>
+                      <p style="font-size:0.82rem; color:var(--text-secondary);">Fine-tune YOLO confidence, corridor width, and depth estimation</p>
+                    </div>
+
+                    <div class="settings-group-list">
+                      <div class="setting-row-item">
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Walking Path Corridor Width</span>
+                          <span id="val-corridor-width" style="font-size:0.8rem; color:var(--brand-blue); font-weight:700;">34% of frame</span>
+                        </div>
+                        <input id="set-corridor-width" type="range" min="0.15" max="0.60" step="0.01" value="0.34" style="width:160px;">
+                      </div>
+
+                      <div class="setting-row-item">
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">YOLO Confidence Threshold</span>
+                          <span id="val-confidence" style="font-size:0.8rem; color:var(--brand-blue); font-weight:700;">40%</span>
+                        </div>
+                        <input id="set-confidence" type="range" min="0.20" max="0.80" step="0.05" value="0.40" style="width:160px;">
+                      </div>
+
+                      <div class="setting-row-item">
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Depth Estimation Backend</span>
+                          <span class="setting-desc">Pinhole math vs monocular neural network</span>
+                        </div>
+                        <select id="set-depth-backend" class="styled-select">
+                          <option value="geometric" selected>Geometric (Pinhole Math, 0.2ms)</option>
+                          <option value="midas">MiDaS (Monocular Neural Network)</option>
+                        </select>
+                      </div>
+
+                      <div class="setting-row-item">
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Maximum Relevant Distance</span>
+                          <span id="val-max-distance" style="font-size:0.8rem; color:var(--brand-blue); font-weight:700;">6.0 meters</span>
+                        </div>
+                        <input id="set-max-distance" type="range" min="3.0" max="10.0" step="0.5" value="6.0" style="width:160px;">
+                      </div>
+
+                      <div class="setting-row-item">
+                        <div class="setting-text-wrap">
+                          <span class="setting-title">Alert Cooldown Window</span>
+                          <span id="val-cooldown" style="font-size:0.8rem; color:var(--brand-blue); font-weight:700;">2.0 seconds</span>
+                        </div>
+                        <input id="set-cooldown" type="range" min="0.5" max="5.0" step="0.25" value="2.0" style="width:160px;">
+                      </div>
+                    </div>
+
+                    <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+                      <button id="btn-save-page-settings" class="btn-start-large" style="padding:10px 24px; border-radius:var(--radius-md);" type="submit">
+                        Save CV Settings
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- 3. VOICE & AUDIO TAB -->
+                <div id="set-pane-voice" class="settings-pane" hidden>
+                  <div style="margin-bottom:20px;">
+                    <h2 class="card-title" style="font-size:1.15rem;">Voice & Audio Configuration</h2>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">Speech synthesis locale, volume, and acoustic sonar</p>
+                  </div>
+                  <div id="voice-service-status" class="info-callout-box" style="margin-bottom:16px;">Text-to-speech engine ready.</div>
+                  <div id="speech-input-status" class="info-callout-box">Speech recognition ready.</div>
+                </div>
+
+                <!-- 4. NAVIGATION TAB -->
+                <div id="set-pane-navigation" class="settings-pane" hidden>
+                  <div style="margin-bottom:20px;">
+                    <h2 class="card-title" style="font-size:1.15rem;">Navigation & Maps Settings</h2>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">OpenStreetMap routing engine & Google Maps integration</p>
+                  </div>
+                  <p id="map-service-status" style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
+                    OSRM foot engine active. Nominatim geocoder debounced.
+                  </p>
+                </div>
+
+                <!-- 5. CAMERA TAB -->
+                <div id="set-pane-camera" class="settings-pane" hidden>
+                  <div style="margin-bottom:20px;">
+                    <h2 class="card-title" style="font-size:1.15rem;">Camera & Hardware Calibration</h2>
+                    <p style="font-size:0.82rem; color:var(--text-secondary);">Focal length (fx) and lens controls</p>
+                  </div>
+                  <div class="setting-row-item">
+                    <div class="setting-text-wrap">
+                      <span class="setting-title">Camera Focal Length (fx)</span>
+                      <span id="val-focal-length" style="font-size:0.8rem; color:var(--brand-blue); font-weight:700;">600 px</span>
+                    </div>
+                    <input id="set-focal-length" type="range" min="300" max="1000" step="10" value="600" style="width:160px;">
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Right 35%: Device Status Card + Recent Activity Card -->
+              <div class="right-side-panel">
+                
+                <!-- Device Status Card -->
+                <div class="clean-card">
+                  <div class="card-header-row">
+                    <div class="card-title-wrap">
+                      <span class="card-icon">📱</span>
+                      <div>
+                        <h3 class="card-title">Device Status</h3>
+                        <span style="font-size:0.75rem; color:var(--text-secondary);">Camera and system information</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="device-status-list">
+                    <div class="device-status-item">
+                      <div class="device-status-left">
+                        <span>📷</span>
+                        <span>Camera</span>
+                      </div>
+                      <div class="device-status-right">
+                        <span id="dev-status-camera" class="card-badge badge-green">Connected</span>
+                        <span style="color:var(--text-muted);">›</span>
+                      </div>
+                    </div>
+
+                    <div class="device-status-item">
+                      <div class="device-status-left">
+                        <span>⚙️</span>
+                        <span>AI Model</span>
+                      </div>
+                      <div class="device-status-right">
+                        <span id="dev-status-model" class="card-badge badge-green">Loaded</span>
+                        <span style="color:var(--text-muted);">›</span>
+                      </div>
+                    </div>
+
+                    <div class="device-status-item">
+                      <div class="device-status-left">
+                        <span>🔋</span>
+                        <span>Battery</span>
+                      </div>
+                      <div class="device-status-right">
+                        <span id="dev-status-battery" style="font-weight:700; font-size:0.85rem;">85% 🔋</span>
+                      </div>
+                    </div>
+
+                    <div class="device-status-item">
+                      <div class="device-status-left">
+                        <span>📶</span>
+                        <span>Internet</span>
+                      </div>
+                      <div class="device-status-right">
+                        <span id="dev-status-internet" class="card-badge badge-green">Connected</span>
+                        <span style="color:var(--text-muted);">›</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Recent Activity Card -->
+                <div class="clean-card">
+                  <div class="card-header-row">
+                    <div class="card-title-wrap">
+                      <span class="card-icon">🕒</span>
+                      <div>
+                        <h3 class="card-title">Recent Activity</h3>
+                        <span style="font-size:0.75rem; color:var(--text-secondary);">Latest system events</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="recent-activity-list" id="recent-activity-list">
+                    <div class="recent-activity-item">
+                      <div class="activity-item-left">
+                        <div class="activity-icon-badge" style="background:#d1fae5; color:#059669;">✓</div>
+                        <div class="activity-text-wrap">
+                          <span class="activity-title">Path is clear.</span>
+                          <span class="activity-sub">Navigation instruction</span>
+                        </div>
+                      </div>
+                      <span class="activity-timestamp">10:24 AM</span>
+                    </div>
+
+                    <div class="recent-activity-item">
+                      <div class="activity-item-left">
+                        <div class="activity-icon-badge" style="background:#ede9fe; color:#7c3aed;">🔔</div>
+                        <div class="activity-text-wrap">
+                          <span class="activity-title">Person detected.</span>
+                          <span class="activity-sub">Object detection</span>
+                        </div>
+                      </div>
+                      <span class="activity-timestamp">10:22 AM</span>
+                    </div>
+
+                    <div class="recent-activity-item">
+                      <div class="activity-item-left">
+                        <div class="activity-icon-badge" style="background:#dbeafe; color:#2563eb;">↗️</div>
+                        <div class="activity-text-wrap">
+                          <span class="activity-title">Turn right.</span>
+                          <span class="activity-sub">Navigation instruction</span>
+                        </div>
+                      </div>
+                      <span class="activity-timestamp">10:20 AM</span>
+                    </div>
+
+                    <div class="recent-activity-item">
+                      <div class="activity-item-left">
+                        <div class="activity-icon-badge" style="background:#ccfbf1; color:#0d9488;">🔊</div>
+                        <div class="activity-text-wrap">
+                          <span class="activity-title">Voice alert played.</span>
+                          <span class="activity-sub">Audio output</span>
+                        </div>
+                      </div>
+                      <span class="activity-timestamp">10:18 AM</span>
+                    </div>
+
+                    <div class="recent-activity-item">
+                      <div class="activity-item-left">
+                        <div class="activity-icon-badge" style="background:#e0f2fe; color:#0284c7;">📷</div>
+                        <div class="activity-text-wrap">
+                          <span class="activity-title">Camera initialized.</span>
+                          <span class="activity-sub">System startup</span>
+                        </div>
+                      </div>
+                      <span class="activity-timestamp">10:15 AM</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </section>
+
+          <!-- =============================================================== -->
+          <!-- 11. ABOUT VIEW                                                  -->
+          <!-- =============================================================== -->
+          <section id="about-view" class="view-panel" aria-labelledby="about-title" role="tabpanel" hidden>
+            <div class="clean-card" style="max-width:800px; margin:0 auto; padding:32px;">
+              <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                <div class="brand-icon-circle" style="width:54px; height:54px; font-size:1.5rem;">🦮</div>
+                <div>
+                  <h2 class="card-title" style="font-size:1.5rem;">SafePath-AI</h2>
+                  <p style="font-size:0.88rem; color:var(--text-secondary);">Assistive Mobility Companion for Independent Living</p>
+                </div>
+              </div>
+
+              <p style="line-height:1.7; color:var(--text-primary); margin-bottom:16px;">
+                SafePath-AI combines deep learning object detection (YOLOv8), multi-object spatial tracking, monocular pinhole depth estimation, and open-source OpenStreetMap walking navigation into an all-in-one assistant.
+              </p>
+
+              <h3 class="card-title" style="margin:20px 0 10px;">Architecture Highlights</h3>
+              <ul style="line-height:1.8; padding-left:20px; color:var(--text-secondary);">
+                <li><strong>Local Deep Learning Vision</strong>: 80 COCO classes with real bounding boxes and track persistence.</li>
+                <li><strong>Spatial Corridor Analysis</strong>: Evaluates center 34% forward walking corridor vs left & right peripherals.</li>
+                <li><strong>Hands-Free Ask SafePath</strong>: Natural spoken responses in 8 languages (English, Telugu, Hindi, Tamil, Kannada, Marathi, Bengali, Spanish).</li>
+                <li><strong>100% Privacy Preserving</strong>: Zero third-party video storage or advertising tracking.</li>
+              </ul>
+            </div>
+          </section>
+
+        </main>
+      </div>
+
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- AUTH / SIGN IN & SIGN UP MODAL (Matching Screenshot 1)              -->
+    <!-- =================================================================== -->
+    <div id="auth-modal" class="auth-modal-overlay" hidden>
+      <div class="auth-card-container">
+        
+        <!-- Left Hero Half -->
+        <div class="auth-hero-pane">
+          <div>
+            <div class="auth-brand-row">
+              <div class="brand-icon-circle" style="width:36px; height:36px;">🦮</div>
+              <div>
+                <span style="font-weight:900; font-size:1.1rem; color:#071b3b;">SafePath<span style="color:#1d68f6;">-AI</span></span>
+                <div style="font-size:0.68rem; color:#64748b; font-weight:600;">Assistive Mobility Companion</div>
+              </div>
+            </div>
+
+            <h2 class="auth-hero-headline">Safer Paths<br>for a Brighter Tomorrow</h2>
+            <p class="auth-hero-desc">
+              SafePath-AI helps visually impaired and mobility-challenged individuals navigate independently with the power of AI.
+            </p>
+
+            <div class="auth-badges-grid">
+              <div class="auth-feature-badge">
+                <div class="badge-circle-icon" style="background:#dbeafe; color:#1d4ed8;">🧭</div>
+                <span class="badge-title-text">Real-time Navigation</span>
+              </div>
+              <div class="auth-feature-badge">
+                <div class="badge-circle-icon" style="background:#d1fae5; color:#047857;">⚠️</div>
+                <span class="badge-title-text">Obstacle Detection</span>
+              </div>
+              <div class="auth-feature-badge">
+                <div class="badge-circle-icon" style="background:#ede9fe; color:#6d28d9;">🎙️</div>
+                <span class="badge-title-text">Voice Assistance</span>
+              </div>
+              <div class="auth-feature-badge">
+                <div class="badge-circle-icon" style="background:#e0f2fe; color:#0284c7;">🤖</div>
+                <span class="badge-title-text">AI-Powered Support</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-hero-image-wrap">
+            <img src="assets/hero.jpg" alt="Visually impaired user navigating path with cane" class="auth-hero-img">
+          </div>
+
+          <div class="auth-script-footer">
+            More Independence, More Possibilities
+          </div>
+        </div>
+
+        <!-- Right Form Half (Sign In & Sign Up Modes) -->
+        <div class="auth-form-pane">
+          
+          <!-- Top Right Toggle Switcher -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div id="auth-mode-switch-wrap" style="font-size:0.84rem; color:#64748b; margin-left:auto;">
+              <span id="auth-switch-label">Don't have an account?</span>
+              <button id="btn-toggle-auth-mode" type="button" style="background:none; border:none; color:#1d68f6; font-weight:700; cursor:pointer; margin-left:4px;">Sign Up</button>
+            </div>
+            <button class="modal-close-btn" data-modal="auth-modal" type="button" title="Close" style="margin-left:12px; font-size:1.1rem;">✕</button>
+          </div>
+
+          <!-- SIGN IN FORM -->
+          <div id="auth-signin-box">
+            <div class="auth-form-header">
+              <h2 class="auth-form-title">Welcome Back</h2>
+              <p class="auth-form-sub">Sign in to continue your journey with SafePath-AI</p>
+            </div>
+
+            <form id="auth-login-form">
+              <div class="auth-input-group">
+                <label class="auth-label" for="auth-email">✉️ Email or Phone Number</label>
+                <input id="auth-email" class="auth-input-field" type="text" placeholder="Enter your email or phone number" value="user@safepath.ai" required>
+              </div>
+
+              <div class="auth-input-group">
+                <label class="auth-label" for="auth-password">🔒 Password</label>
+                <div style="position:relative; width:100%;">
+                  <input id="auth-password" class="auth-input-field" type="password" placeholder="Enter your password" value="password123" required style="padding-right:40px;">
+                  <button type="button" id="btn-toggle-pwd-vis" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.1rem;">👁️</button>
+                </div>
+              </div>
+
+              <div class="auth-options-row">
+                <label class="remember-label" for="auth-remember">
+                  <input id="auth-remember" type="checkbox" checked>
+                  <span>Remember me</span>
+                </label>
+                <a href="#" class="forgot-link" id="btn-forgot-password">Forgot password?</a>
+              </div>
+
+              <button type="submit" class="btn-auth-submit" id="btn-submit-signin">
+                <span>Sign In</span>
+                <span>➔</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- SIGN UP FORM -->
+          <div id="auth-signup-box" hidden>
+            <div class="auth-form-header">
+              <h2 class="auth-form-title">Create Account</h2>
+              <p class="auth-form-sub">Sign up to start your journey with SafePath-AI</p>
+            </div>
+
+            <form id="auth-signup-form">
+              <div class="auth-input-group">
+                <label class="auth-label" for="signup-name">👤 Full Name</label>
+                <input id="signup-name" class="auth-input-field" type="text" placeholder="Enter your full name" required>
+              </div>
+
+              <div class="auth-input-group">
+                <label class="auth-label" for="signup-email">✉️ Email or Phone Number</label>
+                <input id="signup-email" class="auth-input-field" type="text" placeholder="Enter your email or phone number" required>
+              </div>
+
+              <div class="auth-input-group">
+                <label class="auth-label" for="signup-password">🔒 Create Password</label>
+                <div style="position:relative; width:100%;">
+                  <input id="signup-password" class="auth-input-field" type="password" placeholder="Create a secure password" required style="padding-right:40px;">
+                  <button type="button" id="btn-toggle-signup-pwd-vis" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.1rem;">👁️</button>
+                </div>
+              </div>
+
+              <div class="auth-options-row">
+                <label class="remember-label" for="signup-terms">
+                  <input id="signup-terms" type="checkbox" checked required>
+                  <span>I agree to Terms & Privacy</span>
+                </label>
+              </div>
+
+              <button type="submit" class="btn-auth-submit" id="btn-submit-signup">
+                <span>Create Account</span>
+                <span>➔</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="auth-divider">OR</div>
+
+          <button class="social-auth-btn" type="button" id="btn-auth-google">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <button class="social-auth-btn" type="button" id="btn-auth-apple">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.67-.82 1.13-1.96 1.01-3.1-.98.04-2.16.65-2.85 1.47-.61.71-1.14 1.88-1 3 1.09.09 2.19-.55 2.84-1.37z"/></svg>
+            <span>Continue with Apple</span>
+          </button>
+
+          <!-- Guest Continue Button -->
+          <button id="btn-guest-enter" class="subtle-action-btn" style="width:100%; justify-content:center; margin-top:4px;" type="button">
+            <span>Continue as Guest / Enter SafePath</span>
+          </button>
+
+          <div class="auth-terms-footnote">
+            <span data-i18n="auth_terms_note">By continuing, you agree to our</span> <a href="#" data-i18n="auth_terms_link">Terms of Service</a> <span data-i18n="and_str">and</span> <a href="#" data-i18n="auth_privacy_link">Privacy Policy</a>.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- CAMERA & AUDIO PERMISSION ONBOARDING MODAL (Mobile First)         -->
+    <!-- ================================================================= -->
+    <div id="permission-onboarding-modal" class="permission-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="perm-modal-title" style="display:none;">
+      <div class="permission-card" id="permission-card-inner">
+        
+        <!-- Language Switcher in Permission Dialog -->
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center; margin-bottom:4px; padding-bottom:8px; border-bottom:1px solid var(--border-color);">
+          <div style="display:flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:700; color:var(--brand-blue);">
+            <span>🌐</span>
+            <span data-i18n="perm_lang_select_title">Select Language / భాష / भाषा:</span>
+          </div>
+          <select id="perm-language-select" class="header-lang-wrapper" style="padding:4px 8px; font-size:0.84rem; font-weight:600; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-primary);" aria-label="Select Language">
+            <option value="en">English</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="kn">ಕನ್ನಡ (Kannada)</option>
+            <option value="mr">मराठी (Marathi)</option>
+            <option value="bn">বাংলা (Bengali)</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+
+        <div class="permission-icon-circle" aria-hidden="true">
+          📷
+        </div>
+        
+        <h2 id="perm-modal-title" class="permission-title" data-i18n="perm_title">Enable Camera & Spatial Audio</h2>
+        
+        <p class="permission-desc" data-i18n="perm_desc">
+          SafePath-AI requires camera and microphone permissions to detect obstacles, calculate distance, and guide you with voice alerts.
+        </p>
+
+        <!-- Voice & Audio Control Indicator -->
+        <div class="permission-voice-status" id="perm-voice-status-pill">
+          <span class="pulse-dot" style="background:var(--brand-blue);"></span>
+          <span id="perm-voice-status-text" data-i18n="perm_voice_status">🎙️ Dual Control: Tap button or say "Grant" / "Start"</span>
+        </div>
+
+        <div class="permission-actions">
+          <button id="btn-grant-camera-permission" class="btn-grant-permission" type="button" aria-label="Enable Camera and Spatial Audio">
+            <span aria-hidden="true" style="font-size:1.2rem;">📷</span>
+            <span data-i18n="perm_grant_btn">Enable Camera & Audio</span>
+          </button>
+          
+          <button id="btn-skip-camera-permission" class="btn-skip-permission" type="button">
+            <span data-i18n="perm_skip_btn">Continue without Camera</span>
+          </button>
+        </div>
+
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;" data-i18n="perm_privacy_note">
+          🔒 Privacy First: All AI computer vision runs in real-time. No video is recorded or stored.
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Connection & Pairing Modal -->
+    <div id="mobile-pair-modal" class="modal-backdrop" hidden>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 class="card-title" data-i18n="connect_mobile_title">📱 Connect Mobile or Tablet</h2>
+          <button class="modal-close-btn" data-modal="mobile-pair-modal" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:16px;" data-i18n="connect_mobile_desc">
+            Access SafePath on your phone over local Wi-Fi with zero installation:
+          </p>
+          <div style="padding:14px; background:var(--bg-card-subtle); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <code id="modal-network-url" style="font-family:var(--font-mono); font-weight:700;">http://localhost:8000/</code>
+            <button id="btn-copy-url" class="subtle-action-btn" type="button" data-i18n="copy_url_btn">Copy URL</button>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-secondary);" data-i18n="connect_mobile_steps">1. Connect phone to same Wi-Fi network.<br>2. Open URL in browser.<br>3. Tap "Add to Home Screen" for full-screen PWA!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snapshot AI Results Modal -->
+    <div id="snapshot-modal" class="modal-backdrop" hidden>
+      <div class="modal-dialog large-modal">
+        <div class="modal-header">
+          <h2 class="card-title" data-i18n="snapshot_breakdown_title">📸 AI Snapshot Spatial Breakdown</h2>
+          <button class="modal-close-btn" data-modal="snapshot-modal" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:20px;">
+            <div>
+              <img id="snapshot-preview-img" alt="Captured snapshot preview" style="width:100%; border-radius:var(--radius-md); display:block;" src="">
+            </div>
+            <div>
+              <div style="padding:12px; border-radius:var(--radius-md); background:var(--brand-blue-light); margin-bottom:12px;">
+                <span style="font-size:0.75rem; font-weight:700; color:var(--brand-blue);" data-i18n="assistance_verdict_label">Assistance Verdict:</span>
+                <p id="snapshot-modal-verdict" style="font-weight:700; font-size:0.95rem; margin-top:2px;">Analyzing snapshot...</p>
+              </div>
+              <table style="width:100%; font-size:0.82rem; border-collapse:collapse;">
+                <thead>
+                  <tr style="border-bottom:1px solid var(--border-color); color:var(--text-secondary);">
+                    <th style="padding:6px;" data-i18n="th_object">Object</th>
+                    <th style="padding:6px;" data-i18n="th_distance">Distance</th>
+                    <th style="padding:6px;" data-i18n="th_zone">Zone</th>
+                    <th style="padding:6px;" data-i18n="th_risk">Risk</th>
+                    <th style="padding:6px;" data-i18n="th_level">Level</th>
+                  </tr>
+                </thead>
+                <tbody id="snapshot-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation" role="tablist">
+      <button id="mob-tab-home" class="mob-nav-item is-active" data-view="home-view" type="button" role="tab">
+        <span class="mob-nav-icon">🏠</span>
+        <span data-i18n="nav_home">Home</span>
+      </button>
+      <button id="mob-tab-vision" class="mob-nav-item" data-view="vision-view" type="button" role="tab">
+        <span class="mob-nav-icon">📷</span>
+        <span data-i18n="nav_vision">Vision</span>
+      </button>
+      <button id="mob-tab-objects" class="mob-nav-item" data-view="objects-view" type="button" role="tab">
+        <span class="mob-nav-icon">🎯</span>
+        <span data-i18n="nav_objects">Detect</span>
+      </button>
+      <button id="mob-tab-navigation" class="mob-nav-item" data-view="navigation-view" type="button" role="tab">
+        <span class="mob-nav-icon">📍</span>
+        <span data-i18n="nav_navigation">Nav</span>
+      </button>
+      <button id="mob-tab-settings" class="mob-nav-item" data-view="settings-view" type="button" role="tab">
+        <span class="mob-nav-icon">⚙️</span>
+        <span data-i18n="nav_settings">Settings</span>
+      </button>
+    </nav>
+
+    <!-- Floating Fast-Access Voice & Accessibility FAB Widget (Dual Control) -->
+    <div id="floating-accessibility-fab" class="floating-accessibility-fab" aria-label="Quick Accessibility Controls">
+      <button id="fab-voice-trigger" class="fab-btn fab-voice-btn" type="button" title="Voice Control & Command (Tap or Speak)" aria-label="Voice Command Assistant">
+        <span class="fab-icon" aria-hidden="true">🎙️</span>
+      </button>
+      <button id="fab-cam-toggle" class="fab-btn fab-cam-btn" type="button" title="Quick Toggle Camera" aria-label="Toggle Camera Stream">
+        <span class="fab-icon" aria-hidden="true">📷</span>
+      </button>
+      <button id="fab-sos-trigger" class="fab-btn fab-sos-btn" type="button" title="Emergency Assistance (SOS)" aria-label="Emergency SOS Alert">
+        <span class="fab-icon" aria-hidden="true">🚨</span>
+      </button>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Application Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="app.js?v=2.2"></script>
+  </body>
+</html>
